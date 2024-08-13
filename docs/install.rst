@@ -4,14 +4,47 @@ Install
 Prerequisites
 -------------
 
-Mini-NDN is tested on the following Linux distributions:
+Mini-NDN is officially supported on the following Linux distributions:
 
-- Ubuntu 20.04 (recommended)
-- Ubuntu 22.04
+- Ubuntu 20.04
+- Ubuntu 22.04 (recommended)
+- Ubuntu 24.04
 - Debian 11 (WiFi scenario does not work)
 - Fedora 33 (WiFi scenario does not work)
 
 You must have sudo privileges to install and run Mini-NDN.
+
+Using Docker
+------------
+
+You can use the nightly build from GitHub package registry
+::
+    docker run -m 4g --cpus=4 -it --privileged \
+            -v /lib/modules:/lib/modules \
+            ghcr.io/named-data/mini-ndn:master bash
+
+
+Building your own Docker image
+------------------------------
+
+The provided Dockerfile can be used to build an image from scratch. To build with the Dockerfile:
+  - Clone the repository and type.
+    ::
+        docker build -t minindn .
+  - You can then access the container through shell with,
+    ::
+        docker run -m 4g --cpus=4 -it --privileged \
+            -v /lib/modules:/lib/modules \
+            minindn bin/bash
+
+Additional recommendations
+--------------------------
+- It is recommended to set reasonable constraints on memory (`-m`) and CPU cores (`--cpus`), especially on less
+  powerful or non-dedicated systems.
+- `--privileged` is mandatory for underlying `Mininet <http://mininet.org/>`_ to utilize the virtual switch
+- The root directory on `run` is `/mini-ndn`, which contains the installation and examples.
+- The GUI may not work for now due to docker and xterm setup issues and is independent from Mini-NDN.
+  If you intend to run the GUI, pass `-e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix` to the `docker run` command.
 
 Using Vagrantfile
 -----------------
@@ -48,13 +81,6 @@ Some notable flags are:
   This shortens installation time by downloading binary packages, but is only available on Ubuntu.
 - ``--source`` prefers installing NDN software from source code.
 - ``--use-existing`` will only install dependencies not already in the executable path.
-
-IMPORTANT: For now, Mininet-WiFi only works with ``--source`` installation because the current NFD release (0.7.1) doesn't
-incorporate `issue 5155 <https://redmine.named-data.net/issues/5155>`, a required patch for WiFi module to work properly.
-With the next NFD release, Mininet-WiFi will work with both ``source`` and ``ppa``. Alternatively, you can
-checkout (at your own risk) a third-party source "`Use NFD nightly with Mini-NDN <https://yoursunny.com/t/2021/NFD-nightly-minindn/>`", which provides
-NFD-nightly version and contains all the necessary patches. 
-
 - ``--dummy-keychain`` patches ndn-cxx to use an in-memory dummy KeyChain, which reduces CPU overhead
   and allows you to scale up Mini-NDN experiments. Large Mini-NDN experiments would run significantly
   faster after applying this patch. However, your experiments cannot use any NDN security related
@@ -80,7 +106,7 @@ reinstall the software (``./waf && sudo ./waf install``).
 Installing Dependencies
 -----------------------
 
-This section outlines how to install dependnecies manually.
+This section outlines how to install dependencies manually.
 If you used ``install.sh``, you do not need to perform these steps.
 
 Mininet
@@ -122,8 +148,9 @@ ________________
 Each node in Mini-NDN will run the official implementation of NDN
 installed on your system. The following dependencies are needed:
 
-Mini-NDN uses NFD, NLSR, and ndn-tools.
+Mini-NDN uses ndn-cxx, NFD, NLSR, and ndn-tools.
 
+- To install ndn-cxx: https://docs.named-data.net/ndn-cxx/current/INSTALL.html
 - To install NFD: https://named-data.net/doc/NFD/current/INSTALL.html
 - To install NLSR: https://named-data.net/doc/NLSR/current/INSTALL.html
 - To install ndn-tools: https://github.com/named-data/ndn-tools
@@ -134,8 +161,9 @@ Mini-NDN uses NFD, NLSR, and ndn-tools.
     to use apt, please run ``sudo ./waf uninstall`` in all the NDN projects before proceeding
     with apt. Similarly, remove from apt if switching to source.
 
-Please see the :ref:`scaling-note <scaling-note>` to learn about disabling
-security for better scalability.
+In cases where using NDN security is not important to the results, it is recommended
+to use the dummy keychain patch for ndn-cxx to disable it for improved scalability.
+This patch is located at `util/patches/ndn-cxx-dummy-keychain.patch.`
 
 Note that all three of these can be installed from the Named Data PPA.
 Instructions for setting it up can be found in the NFD installation
